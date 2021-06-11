@@ -16,7 +16,7 @@ class MusicDataset(Dataset):
         meta_data = pd.read_csv(csv_path)
         song_file_names = utils.get_image_files(root_dir)
 
-        self.n_samples = meta_data.shape[0]
+        self.n_samples = meta_data.shape[0] - 1
         self.transform = transform
         self.labels = utils.get_labels(meta_data, column_name='label')
         self.data = utils.load_data(song_file_names, self.transform)

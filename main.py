@@ -10,7 +10,7 @@ num_epochs = 10
 
 
 if __name__ == '__main__':
-    device = torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(torch.cuda.memory_allocated()/1024**2, torch.cuda.memory_cached()/1024**2)
     torch.cuda.empty_cache()
     preprocessing = transforms.Compose([
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         counter = 0
         for data, target in train_loader:
-            y_pred = base_model(data)
-            cost = cost_fn(y_pred, target)
+            y_pred = base_model(data.to(device=device))
+            cost = cost_fn(y_pred, target.to(device=device))
             cost.backward()
             optimizer.step()
             optimizer.zero_grad()

@@ -1,3 +1,4 @@
 import torch
 
-print(torch.cuda.is_available())
+a = torch.tensor([1, 2, 3])
+print(type(a))

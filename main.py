@@ -6,10 +6,20 @@ from torch.utils.data import DataLoader
 from PIL import Image
 import datetime
 import matplotlib.pyplot as plt
+from logs.loghandler import TrainingLogger
+from pathlib import Path
+import logging
 
 # hyper parameters
 batch_size = 128
 num_epochs = 10
+
+# init logger
+root_dir = Path(__file__).parent.absolute().__str__()
+log_file_path = root_dir + '/logs/traininglogs/training.log'
+formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+training_logger = TrainingLogger.construct_logger(name='GTZan_model', log_file_path=log_file_path, logger_level=20,
+                                                  formatter=formatter)
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -35,6 +45,7 @@ if __name__ == '__main__':
     cost_values = []
     accuracy_values = []
     epoch = 0
+    print(f"Starting training, logging training info to {log_file_path}...")
     while True:
 
         total_cost = 0.0
@@ -53,23 +64,29 @@ if __name__ == '__main__':
             accuracy += accuracy_tensor.item()
             total_cost += cost.item() / len(train_loader)
 
-        cost_values.append(total_cost)
-        accuracy_values.append(accuracy)
+        cost_values.append(total_cost / len(dataset))
+        accuracy_values.append(accuracy / len(dataset))
 
         if total_cost > min_cost:
             counter += 1
-            print(f"Cost did not decrease at epoch: {epoch}, total epoch stagnation {counter}")
+            training_logger.log_info(f"Cost did not decrease at epoch: {epoch}, total epoch stagnation {counter}")
+
         elif total_cost < min_cost:
             min_cost = total_cost
             counter = 0
-            print(f'The minimum cost currently is: {min_cost}.')
+            training_logger.log_info(f'The minimum cost currently is: {min_cost}.')
 
-        print('{} Epoch {}, Training loss {}, Training Accuracy {}'.format(datetime.datetime.now(), epoch, total_cost,
+        training_logger.log_info('{} Epoch {}, Training loss {}, Training Accuracy {}'.format(datetime.datetime.now(),
+                                                                                              epoch, total_cost,
+                                                                                              accuracy / len(dataset)))
+
+        print('{} Epoch {}, Training loss {}, Training Accuracy {}'.format(datetime.datetime.now(),
+                                                                           epoch, total_cost,
                                                                            accuracy / len(dataset)))
 
         epoch += 1
         if counter == 10:
-            print("Stopping training due to overfitting...")
+            print("Stopping training due to over fitting...")
             break
     g = plt.figure(1)
     plt.title("Cost over epochs")
@@ -79,4 +96,3 @@ if __name__ == '__main__':
     plt.title("Accuracy")
     plt.plot(accuracy_values, 'b')
     t.show()
-
